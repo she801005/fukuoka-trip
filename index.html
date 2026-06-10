@@ -74,6 +74,47 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
 .leg { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
 .leg:last-child { margin-bottom:0; }
 .leg-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+
+/* ── 手機切換按鈕 ── */
+#tab-bar {
+  display:none;
+  flex-shrink:0;
+  background:#2c3e50;
+  border-top:1px solid #3d5166;
+}
+#tab-bar button {
+  flex:1; padding:10px 0; border:none; cursor:pointer;
+  font-size:14px; font-weight:bold;
+  background:transparent; color:rgba(255,255,255,0.6);
+  transition:all 0.2s;
+}
+#tab-bar button.active {
+  color:white; background:rgba(255,255,255,0.12);
+  border-top:2px solid #3498db;
+}
+
+/* ── 手機版 RWD ── */
+@media (max-width: 767px) {
+  #body { flex-direction:column; position:relative; }
+
+  #itin {
+    width:100%; flex-shrink:0;
+    border-right:none; border-bottom:1px solid #ddd;
+    display:none;
+    height:calc(100vh - 90px);
+  }
+  #itin.active { display:block; }
+
+  #map {
+    flex:1; width:100%;
+    height:calc(100vh - 90px);
+  }
+  #map.hidden { display:none; }
+
+  #tab-bar { display:flex; }
+
+  #legend { bottom:16px; right:8px; font-size:10px; padding:6px 9px; }
+}
 </style>
 </head>
 <body>
@@ -83,6 +124,11 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
 <div id="body">
   <div id="itin"></div>
   <div id="map"></div>
+</div>
+
+<div id="tab-bar">
+  <button id="btn-itin" onclick="showTab('itin')">📋 行程</button>
+  <button id="btn-map" class="active" onclick="showTab('map')">🗺️ 地圖</button>
 </div>
 
 <script>
@@ -550,6 +596,26 @@ itinEl.appendChild(refBlock);
 
 // 確保地圖重新計算尺寸
 setTimeout(() => map.invalidateSize(), 100);
+
+/* ── 手機分頁切換 ── */
+function showTab(tab) {
+  const itinEl2 = document.getElementById('itin');
+  const mapEl   = document.getElementById('map');
+  const btnItin = document.getElementById('btn-itin');
+  const btnMap  = document.getElementById('btn-map');
+  if (tab === 'itin') {
+    itinEl2.classList.add('active');
+    mapEl.classList.add('hidden');
+    btnItin.classList.add('active');
+    btnMap.classList.remove('active');
+  } else {
+    itinEl2.classList.remove('active');
+    mapEl.classList.remove('hidden');
+    btnMap.classList.add('active');
+    btnItin.classList.remove('active');
+    setTimeout(() => map.invalidateSize(), 50);
+  }
+}
 </script>
 </body>
 </html>
