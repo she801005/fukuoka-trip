@@ -99,23 +99,37 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
   /* 拖曳把手 */
   #drawer-handle {
     display:flex; justify-content:center; align-items:center;
-    padding:10px 0 6px;
+    padding:8px 14px 6px;
     background:#fafafa;
     border-radius:18px 18px 0 0;
     position:sticky; top:0; z-index:3;
     cursor:grab;
+    border-bottom:1px solid #eee;
+    gap:8px;
   }
-  #drawer-handle::before {
+  #drawer-handle .handle-bar {
+    flex:1; display:flex; justify-content:center;
+  }
+  #drawer-handle .handle-bar::before {
     content:'';
     width:40px; height:4px;
     background:#ccc; border-radius:2px;
+    display:block;
   }
+  #drawer-close {
+    background:none; border:none; cursor:pointer;
+    font-size:18px; color:#999; padding:0 2px; line-height:1;
+    flex-shrink:0;
+  }
+  #drawer-close:active { color:#333; }
 
-  /* 遮罩 */
+  /* 遮罩：只蓋 drawer 正上方一小條，讓地圖區可互動 */
   #drawer-overlay {
     display:none;
-    position:fixed; inset:0;
-    background:rgba(0,0,0,0.3);
+    position:fixed;
+    bottom:52vh; left:0; right:0;
+    height:6px;         /* 極薄，僅作關閉用途 */
+    background:transparent;
     z-index:1999;
   }
   #drawer-overlay.show { display:block; }
@@ -152,7 +166,7 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
 <div id="header">🗾 福岡旅遊　6/16 – 6/21</div>
 
 <div id="body">
-  <div id="itin"><div id="drawer-handle"></div></div>
+  <div id="itin"><div id="drawer-handle"><div class="handle-bar"></div><button id="drawer-close" onclick="closeDrawer()">✕</button></div></div>
   <div id="map"></div>
 </div>
 
