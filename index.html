@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>福岡旅遊 6/16–6/21</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f5; height:100vh; display:flex; flex-direction:column; }
+
+#header {
+  background:#2c3e50; color:white;
+  padding:10px 18px; font-size:16px; font-weight:bold;
+  display:flex; align-items:center; gap:10px; flex-shrink:0;
+}
+
+#body { display:flex; flex:1; overflow:hidden; }
+
+/* ── 行程欄 ── */
+#itin {
+  width:340px; flex-shrink:0;
+  overflow-y:auto; background:#fafafa;
+  border-right:1px solid #ddd;
+}
+
+.day-block { border-bottom:2px solid #eee; }
+
+.day-title {
+  padding:10px 14px; color:white; font-weight:bold; font-size:13px;
+  position:sticky; top:0; z-index:2;
+  display:flex; align-items:center; gap:6px;
+}
+
+.weather-bar {
+  padding:5px 14px; font-size:11px; color:#555;
+  background:#f8f9fa; border-bottom:1px solid #eee;
+}
+
+.itin-row {
+  padding:7px 14px; font-size:12.5px; line-height:1.5;
+  display:flex; align-items:flex-start; gap:8px;
+  border-bottom:1px solid #f0f0f0;
+}
+
+.itin-row .ico { flex-shrink:0; font-size:14px; }
+
+/* 可點擊的地點 */
+.map-link {
+  background: none; border:none; cursor:pointer;
+  font-size:12.5px; line-height:1.5; text-align:left;
+  color:#1a73e8; text-decoration:underline dotted;
+  padding:0; font-family:inherit;
+}
+.map-link:hover { color:#0d47a1; }
+
+.itin-note {
+  margin:4px 14px 10px; padding:7px 10px;
+  background:#fff8e1; border-left:3px solid #f9a825;
+  font-size:11.5px; color:#666; border-radius:0 6px 6px 0;
+}
+
+/* ── 地圖 ── */
+#map { flex:1; }
+
+/* 圖例 */
+#legend {
+  position:absolute; bottom:28px; right:10px; z-index:1000;
+  background:white; border-radius:8px; padding:8px 12px;
+  box-shadow:0 2px 8px rgba(0,0,0,0.2); font-size:11px;
+}
+.leg { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+.leg:last-child { margin-bottom:0; }
+.leg-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+</style>
+</head>
+<body>
+
+<div id="header">🗾 福岡旅遊　6/16 – 6/21</div>
+
+<div id="body">
+  <div id="itin"></div>
+  <div id="map"></div>
+</div>
+
+<script>
+/* ── 地點資料 ── */
+const spots = {
+  airport_fuk:   { name:"福岡機場", type:"airport", lat:33.5853, lng:130.4511 },
+  hotel_forza:   { name:"HOTEL FORZA HAKATA-GUCHI", type:"hotel", lat:33.59083, lng:130.41777 },
+  airbnb_tabisai:{ name:"Airbnb－TABISAI HOTEL TERRACE 博多", type:"hotel", lat:33.580586, lng:130.418312 },
+  teamlab:       { name:"teamLab Forest Fukuoka", type:"spot", lat:33.595302, lng:130.363752 },
+  ryuen:         { name:"燒肉の龍園 西中洲店", type:"restaurant", lat:33.590964, lng:130.406241 },
+  shirataki:     { name:"白糸の滝 & ふれあいの里", type:"spot", lat:33.480199, lng:130.175450 },
+  tsukamoto:     { name:"塚本鮮魚店", type:"restaurant", lat:33.546461, lng:130.169341 },
+  hakatami:      { name:"水炊料理 博多華味鳥 中洲本店", type:"restaurant", lat:33.593985, lng:130.403742 },
+  safari:        { name:"九州自然動物公園 African Safari", type:"spot", lat:33.352022, lng:131.413506 },
+  jigoku_cook:   { name:"地獄蒸し工房 鐵輪", type:"restaurant", lat:33.3154852, lng:131.4762201 },
+  umi_jigoku:    { name:"海地獄", type:"spot", lat:33.315228, lng:131.468716 },
+  kama_jigoku:   { name:"かまど地獄", type:"spot", lat:33.316393, lng:131.472737 },
+  airbnb_yufu:   { name:"Airbnb 由布院（久保的小屋）", type:"hotel", lat:33.265018, lng:131.354122 },
+  wakakae:       { name:"稚加榮 福岡店", type:"restaurant", lat:33.5878, lng:130.392089 },
+  marine_world:  { name:"Marine World 海之中道水族館", type:"spot", lat:33.660975, lng:130.363478 },
+  ishida:        { name:"博多 石田 精緻和食", type:"restaurant", lat:33.591757, lng:130.406848 },
+  royal_canvas:  { name:"THE 皇家花園 Canvas 福岡中洲", type:"hotel", lat:33.594716, lng:130.404335 },
+  hakata_sta:    { name:"博多車站美食街", type:"spot", lat:33.5898, lng:130.4208 },
+};
+
+const typeColor = { airport:"#e74c3c", hotel:"#3498db", restaurant:"#e67e22", spot:"#27ae60" };
+const typeIcon  = { airport:"✈️", hotel:"🏨", restaurant:"🍽️", spot:"🎡" };
+
+/* ── 行程資料 ── */
+const days = [
+  {
+    label:"0️⃣ 6/16 福岡", color:"#7f8c8d",
+    weather:"🌤️ 晴時多雲　30°C／21°C　降水確率 60%",
+    rows:[
+      { ico:"✈️", text:"班機：CI116 16:40-20:00　｜　桃園 T2 出發　→　福岡 國際線航廈 入境" },
+      { ico:"🏨", text:"住：", spot:"hotel_forza" },
+    ]
+  },
+  {
+    label:"1️⃣ 6/17 福岡", color:"#f39c12",
+    weather:"☀️ 晴　31°C／22°C　降水確率 30%",
+    rows:[
+      { ico:"🚶", text:"上午　天神／藥院　散步走走" },
+      { ico:"🏠", text:"15:00　抵達 Airbnb，放行李／休息" },
+      { ico:"🎡", text:"16:00-18:00　", spot:"teamlab", after:"（建議停留 1.5～2 小時）" },
+      { ico:"🍽️", text:"18:30　晚餐：", spot:"ryuen" },
+      { ico:"🏠", text:"住：", spot:"airbnb_tabisai" },
+    ]
+  },
+  {
+    label:"2️⃣ 6/18 糸島", color:"#1abc9c",
+    weather:"🌧️ 雨　24°C／21°C　降水確率 90%",
+    rows:[
+      { ico:"🚌", text:"09:00　出發前往糸島（車程約 60 分鐘）" },
+      { ico:"🎡", text:"10:00-12:30　", spot:"shirataki", after:"（白絲瀑布）" },
+      { ico:"🍽️", text:"13:00　午餐：", spot:"tsukamoto", after:"（生魚片料理，海鮮超豐富）" },
+      { ico:"☕", text:"14:30-16:30　糸島海邊咖啡廳" },
+      { ico:"🍽️", text:"18:00　晚餐：", spot:"hakatami" },
+      { ico:"🏠", text:"住：", spot:"airbnb_tabisai" },
+    ]
+  },
+  {
+    label:"3️⃣ 6/19 別府 & 由布院", color:"#9b59b6",
+    weather:"🌧️ 雨時々曇　27°C／21°C　降水確率 80%",
+    rows:[
+      { ico:"🚌", text:"08:00　出發前往別府（車程約 2.5～3 小時）" },
+      { ico:"🎡", text:"11:30-14:00　", spot:"safari" },
+      { ico:"🍽️", text:"14:15　午餐：", spot:"jigoku_cook", after:"（溫泉蒸氣料理）" },
+      { ico:"🎡", text:"15:30-16:30　別府地獄巡禮：", spot:"umi_jigoku", after:" & ", spot2:"kama_jigoku" },
+      { ico:"🚌", text:"18:00　前往由布院（車程約 50 分鐘）" },
+      { ico:"🛒", text:"晚間　超市採購，悠閒在住宿準備晚餐" },
+      { ico:"🏠", text:"住：", spot:"airbnb_yufu" },
+    ]
+  },
+  {
+    label:"4️⃣ 6/20 福岡", color:"#e74c3c",
+    weather:"🌦️ 多雲有雨　25°C／20°C　降水確率 70%",
+    rows:[
+      { ico:"🚌", text:"09:00　由布院出發，返回福岡" },
+      { ico:"🍽️", text:"12:30　午餐：", spot:"wakakae", after:"（百年老店，海鮮丼超豐盛）" },
+      { ico:"🎡", text:"14:30-16:30　", spot:"marine_world", after:"（海豚、企鵝、白鯨）" },
+      { ico:"🍽️", text:"18:30　晚餐：", spot:"ishida", after:"（和牛 & 季節料理）" },
+      { ico:"🛍️", text:"21:00　自由活動，逛中洲 / 買伴手禮" },
+      { ico:"🏨", text:"住：", spot:"royal_canvas" },
+    ]
+  },
+  {
+    label:"5️⃣ 6/21 福岡", color:"#2980b9",
+    weather:"🌦️ 多雲　27°C／20°C　降水確率 70%",
+    note:"※ 附近有福岡麵包超人博物館（建議 10:00 入館，玩樂約 1.5 小時），如班機改為下午班次可排入。",
+    rows:[
+      { ico:"🍽️", text:"07:30　飯店早餐" },
+      { ico:"🧳", text:"09:00　整理退房，寄放行李" },
+      { ico:"🛍️", text:"09:30　", spot:"hakata_sta", after:"& 福岡機場伴手禮採購" },
+      { ico:"✈️", text:"班機：CI111 11:00-12:30　｜　福岡 國際線航廈 出發　→　桃園 T2 入境　", spot:"airport_fuk" },
+    ]
+  },
+];
+
+/* ── 地圖初始化 ── */
+const map = L.map('map').setView([33.55, 130.80], 9);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'© OpenStreetMap'
+}).addTo(map);
+
+/* 圖例 */
+const legendEl = document.createElement('div');
+legendEl.id = 'legend';
+legendEl.innerHTML = `
+  <div class="leg">✈️ 機場</div>
+  <div class="leg">🏨 住宿</div>
+  <div class="leg">🍽️ 餐廳</div>
+  <div class="leg">🎡 景點</div>`;
+document.getElementById('map').appendChild(legendEl);
+
+/* 建立所有 marker */
+const markers = {};
+Object.entries(spots).forEach(([id, s]) => {
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))">${typeIcon[s.type]}</div>`,
+    iconSize:[24,24], iconAnchor:[12,12]
+  });
+  markers[id] = L.marker([s.lat, s.lng], { icon })
+    .addTo(map)
+    .bindPopup(`<b>${typeIcon[s.type]} ${s.name}</b><br><a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
+});
+
+/* 點擊地點跳轉 */
+function flyTo(id) {
+  const s = spots[id];
+  map.flyTo([s.lat, s.lng], 15, { duration:0.8 });
+  setTimeout(() => markers[id].openPopup(), 900);
+}
+
+/* ── 建立行程 HTML ── */
+const itinEl = document.getElementById('itin');
+
+days.forEach(day => {
+  const block = document.createElement('div');
+  block.className = 'day-block';
+
+  const title = document.createElement('div');
+  title.className = 'day-title';
+  title.style.background = day.color;
+  title.textContent = day.label;
+  block.appendChild(title);
+
+  const weather = document.createElement('div');
+  weather.className = 'weather-bar';
+  weather.textContent = day.weather;
+  block.appendChild(weather);
+
+  day.rows.forEach(row => {
+    const div = document.createElement('div');
+    div.className = 'itin-row';
+
+    const ico = document.createElement('span');
+    ico.className = 'ico';
+    ico.textContent = row.ico;
+    div.appendChild(ico);
+
+    const content = document.createElement('span');
+
+    // 前置文字
+    if (row.text) content.appendChild(document.createTextNode(row.text));
+
+    // 第一個地點連結
+    if (row.spot) {
+      const btn = document.createElement('button');
+      btn.className = 'map-link';
+      btn.textContent = spots[row.spot].name;
+      btn.onclick = () => flyTo(row.spot);
+      content.appendChild(btn);
+    }
+
+    // 中間文字
+    if (row.after) content.appendChild(document.createTextNode(row.after));
+
+    // 第二個地點連結
+    if (row.spot2) {
+      const btn2 = document.createElement('button');
+      btn2.className = 'map-link';
+      btn2.textContent = spots[row.spot2].name;
+      btn2.onclick = () => flyTo(row.spot2);
+      content.appendChild(btn2);
+    }
+
+    div.appendChild(content);
+    block.appendChild(div);
+  });
+
+  if (day.note) {
+    const note = document.createElement('div');
+    note.className = 'itin-note';
+    note.textContent = day.note;
+    block.appendChild(note);
+  }
+
+  itinEl.appendChild(block);
+});
+</script>
+</body>
+</html>
