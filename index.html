@@ -6,6 +6,7 @@
 <title>福岡旅遊 6/16–6/21</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f5; height:100vh; display:flex; flex-direction:column; }
@@ -62,7 +63,7 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
 }
 
 /* ── 地圖 ── */
-#map { flex:1; }
+#map { flex:1; min-width:0; position:relative; }
 
 /* 圖例 */
 #legend {
@@ -105,75 +106,113 @@ const spots = {
   ishida:        { name:"博多 石田 精緻和食", type:"restaurant", lat:33.591757, lng:130.406848 },
   royal_canvas:  { name:"THE 皇家花園 Canvas 福岡中洲", type:"hotel", lat:33.594716, lng:130.404335 },
   hakata_sta:    { name:"博多車站美食街", type:"spot", lat:33.5898, lng:130.4208 },
+  shirogane:     { name:"藥院大通", type:"spot", lat:33.580578, lng:130.396647 },
+  tenjin_ug:     { name:"天神地下街", type:"spot", lat:33.591616, lng:130.399409 },
 };
 
 const typeColor = { airport:"#e74c3c", hotel:"#3498db", restaurant:"#e67e22", spot:"#27ae60" };
-const typeIcon  = { airport:"✈️", hotel:"🏨", restaurant:"🍽️", spot:"🎡" };
+const typeIcon  = { airport:"✈️", hotel:"🏠", restaurant:"🍜", spot:"📍" };
+
+/* ── 參考地點資料 ── */
+const refSpots = {
+  uoden:        { name:"博多シーフードうお田", cat:"seafood", lat:33.591745, lng:130.405099 },
+  nishimatsuya: { name:"西松屋 ブランチ博多パピヨンガーデン", cat:"shop", lat:33.602283, lng:130.420183 },
+  matsukiyo:    { name:"マツモトキヨシ 博多駅地下街店", cat:"shop", lat:33.590263, lng:130.418846 },
+  rakutenci:    { name:"博多牛腸鍋 樂天地 博多站前店", cat:"motsu", lat:33.588801, lng:130.415982 },
+  maedaya:      { name:"博多牛雜鍋 前田屋 博多店", cat:"motsu", lat:33.589218, lng:130.416557 },
+  ichifuji:     { name:"もつ鍋 一藤 博多店", cat:"motsu", lat:33.590268, lng:130.416513 },
+  ikkousha:     { name:"博多一幸舎 総本店", cat:"ramen", lat:33.588284, lng:130.417146 },
+  chinpun:      { name:"ちんぷんかんぷん 春吉店", cat:"motsu", lat:33.586266, lng:130.408905 },
+  canal:        { name:"キャナルシティ博多", cat:"shop", lat:33.589628, lng:130.411195 },
+  amam:         { name:"AMAM DACOTAN Ropponmatsu", cat:"bread", lat:33.578132, lng:130.381444 },
+  boulange:     { name:"BOUL'ANGE（本店）", cat:"bread", lat:33.592522, lng:130.415565 },
+  boulange_t:   { name:"BOUL'ANGE 天神地下街店", cat:"bread", lat:33.590, lng:130.400 },
+  dacomecca:    { name:"Dacomecca", cat:"shop", lat:33.587328, lng:130.419411 },
+  notime:       { name:"Notime Mixology Bar", cat:"bar", lat:33.586436, lng:130.40384 },
+  fuglen:       { name:"FUGLEN KEYAKI DORI", cat:"bread", lat:33.583262, lng:130.387743 },
+  fullful:      { name:"The Full Full Hakata", cat:"bread", lat:33.589928, lng:130.412529 },
+  sansui:       { name:"山水水出珈琲", cat:"bread", lat:33.594606, lng:130.405984 },
+  little_stand: { name:"Little Stand Daimyo", cat:"bread", lat:33.586292, lng:130.394969 },
+  yatai:        { name:"中洲の屋台街", cat:"yatai", lat:33.5894, lng:130.4075 },
+};
+
+const refCatColor = {
+  motsu:"#e67e22", seafood:"#e67e22", ramen:"#c0392b",
+  bread:"#795548", shop:"#8e44ad", bar:"#2c3e50", yatai:"#e74c3c"
+};
+const refCatIcon = {
+  motsu:"🍖", seafood:"🦑", ramen:"🍜",
+  bread:"🍞", shop:"🛍️", bar:"🍺", yatai:"🏮"
+};
+const refCatLabel = {
+  motsu:"牛腸鍋", seafood:"海鮮", ramen:"拉麵",
+  bread:"麵包／咖啡", shop:"購物", bar:"酒吧", yatai:"屋台"
+};
 
 /* ── 行程資料 ── */
 const days = [
   {
-    label:"0️⃣ 6/16 福岡", color:"#7f8c8d",
+    label:"0️⃣ 6/16 (二) 福岡", color:"#7f8c8d",
     weather:"🌤️ 晴時多雲　30°C／21°C　降水確率 60%",
     rows:[
       { ico:"✈️", text:"班機：CI116 16:40-20:00　｜　桃園 T2 出發　→　福岡 國際線航廈 入境" },
-      { ico:"🏨", text:"住：", spot:"hotel_forza" },
+      { ico:"🏠", text:"住：", spot:"hotel_forza" },
     ]
   },
   {
-    label:"1️⃣ 6/17 福岡", color:"#f39c12",
+    label:"1️⃣ 6/17 (三) 福岡", color:"#f39c12",
     weather:"☀️ 晴　31°C／22°C　降水確率 30%",
     rows:[
-      { ico:"🚶", text:"上午　天神／藥院　散步走走" },
+      { ico:"🚶", text:"上午 散步走走：", spot:"tenjin_ug", after:" ／ ", spot2:"shirogane" },
       { ico:"🏠", text:"15:00　抵達 Airbnb，放行李／休息" },
-      { ico:"🎡", text:"16:00-18:00　", spot:"teamlab", after:"（建議停留 1.5～2 小時）" },
-      { ico:"🍽️", text:"18:30　晚餐：", spot:"ryuen" },
+      { ico:"📍", text:"16:00-18:00　", spot:"teamlab", after:"（建議停留 1.5～2 小時）" },
+      { ico:"🍜", text:"18:30　晚餐：", spot:"ryuen" },
       { ico:"🏠", text:"住：", spot:"airbnb_tabisai" },
     ]
   },
   {
-    label:"2️⃣ 6/18 糸島", color:"#1abc9c",
+    label:"2️⃣ 6/18 (四) 糸島", color:"#1abc9c",
     weather:"🌧️ 雨　24°C／21°C　降水確率 90%",
     rows:[
       { ico:"🚌", text:"09:00　出發前往糸島（車程約 60 分鐘）" },
-      { ico:"🎡", text:"10:00-12:30　", spot:"shirataki", after:"（白絲瀑布）" },
-      { ico:"🍽️", text:"13:00　午餐：", spot:"tsukamoto", after:"（生魚片料理，海鮮超豐富）" },
+      { ico:"📍", text:"10:00-12:30　", spot:"shirataki", after:"（白絲瀑布）" },
+      { ico:"🍜", text:"13:00　午餐：", spot:"tsukamoto", after:"（生魚片料理，海鮮超豐富）" },
       { ico:"☕", text:"14:30-16:30　糸島海邊咖啡廳" },
-      { ico:"🍽️", text:"18:00　晚餐：", spot:"hakatami" },
+      { ico:"🍜", text:"18:00　晚餐：", spot:"hakatami" },
       { ico:"🏠", text:"住：", spot:"airbnb_tabisai" },
     ]
   },
   {
-    label:"3️⃣ 6/19 別府 & 由布院", color:"#9b59b6",
+    label:"3️⃣ 6/19 (五) 別府 & 由布院", color:"#9b59b6",
     weather:"🌧️ 雨時々曇　27°C／21°C　降水確率 80%",
     rows:[
       { ico:"🚌", text:"08:00　出發前往別府（車程約 2.5～3 小時）" },
-      { ico:"🎡", text:"11:30-14:00　", spot:"safari" },
-      { ico:"🍽️", text:"14:15　午餐：", spot:"jigoku_cook", after:"（溫泉蒸氣料理）" },
-      { ico:"🎡", text:"15:30-16:30　別府地獄巡禮：", spot:"umi_jigoku", after:" & ", spot2:"kama_jigoku" },
+      { ico:"📍", text:"11:30-14:00　", spot:"safari" },
+      { ico:"🍜", text:"14:15　午餐：", spot:"jigoku_cook", after:"（溫泉蒸氣料理）" },
+      { ico:"📍", text:"15:30-16:30　別府地獄巡禮：", spot:"umi_jigoku", after:" & ", spot2:"kama_jigoku" },
       { ico:"🚌", text:"18:00　前往由布院（車程約 50 分鐘）" },
       { ico:"🛒", text:"晚間　超市採購，悠閒在住宿準備晚餐" },
       { ico:"🏠", text:"住：", spot:"airbnb_yufu" },
     ]
   },
   {
-    label:"4️⃣ 6/20 福岡", color:"#e74c3c",
+    label:"4️⃣ 6/20 (六) 福岡", color:"#e74c3c",
     weather:"🌦️ 多雲有雨　25°C／20°C　降水確率 70%",
     rows:[
       { ico:"🚌", text:"09:00　由布院出發，返回福岡" },
-      { ico:"🍽️", text:"12:30　午餐：", spot:"wakakae", after:"（百年老店，海鮮丼超豐盛）" },
-      { ico:"🎡", text:"14:30-16:30　", spot:"marine_world", after:"（海豚、企鵝、白鯨）" },
-      { ico:"🍽️", text:"18:30　晚餐：", spot:"ishida", after:"（和牛 & 季節料理）" },
+      { ico:"🍜", text:"12:30　午餐：", spot:"wakakae", after:"（百年老店，海鮮丼超豐盛）" },
+      { ico:"📍", text:"14:30-16:30　", spot:"marine_world", after:"（海豚、企鵝、白鯨）" },
+      { ico:"🍜", text:"18:30　晚餐：", spot:"ishida", after:"（和牛 & 季節料理）" },
       { ico:"🛍️", text:"21:00　自由活動，逛中洲 / 買伴手禮" },
-      { ico:"🏨", text:"住：", spot:"royal_canvas" },
+      { ico:"🏠", text:"住：", spot:"royal_canvas" },
     ]
   },
   {
-    label:"5️⃣ 6/21 福岡", color:"#2980b9",
+    label:"5️⃣ 6/21 (日) 福岡", color:"#2980b9",
     weather:"🌦️ 多雲　27°C／20°C　降水確率 70%",
     note:"※ 附近有福岡麵包超人博物館（建議 10:00 入館，玩樂約 1.5 小時），如班機改為下午班次可排入。",
     rows:[
-      { ico:"🍽️", text:"07:30　飯店早餐" },
+      { ico:"🍜", text:"07:30　飯店早餐" },
       { ico:"🧳", text:"09:00　整理退房，寄放行李" },
       { ico:"🛍️", text:"09:30　", spot:"hakata_sta", after:"& 福岡機場伴手禮採購" },
       { ico:"✈️", text:"班機：CI111 11:00-12:30　｜　福岡 國際線航廈 出發　→　桃園 T2 入境　", spot:"airport_fuk" },
@@ -190,11 +229,32 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 /* 圖例 */
 const legendEl = document.createElement('div');
 legendEl.id = 'legend';
+function pinSvg(color) {
+  return `<svg width="14" height="18" viewBox="0 0 14 18" style="flex-shrink:0">
+    <ellipse cx="7" cy="6.5" rx="6" ry="6" fill="${color}"/>
+    <polygon points="7,18 3,11 11,11" fill="${color}"/>
+    <ellipse cx="7" cy="6.5" rx="2.5" ry="2.5" fill="white" opacity="0.7"/>
+  </svg>`;
+}
+function diamondSvg(color) {
+  return `<svg width="14" height="14" viewBox="0 0 14 14" style="flex-shrink:0">
+    <rect x="2" y="2" width="10" height="10" rx="2" transform="rotate(45 7 7)" fill="white" stroke="${color}" stroke-width="2"/>
+  </svg>`;
+}
 legendEl.innerHTML = `
-  <div class="leg">✈️ 機場</div>
-  <div class="leg">🏨 住宿</div>
-  <div class="leg">🍽️ 餐廳</div>
-  <div class="leg">🎡 景點</div>`;
+  <div style="font-size:10px;font-weight:bold;color:#555;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:3px;">主行程</div>
+  <div class="leg">${pinSvg('#e74c3c')} ✈️ 機場</div>
+  <div class="leg">${pinSvg('#3498db')} 🏠 住宿</div>
+  <div class="leg">${pinSvg('#e67e22')} 🍜 餐廳</div>
+  <div class="leg">${pinSvg('#27ae60')} 📍 景點</div>
+  <div style="font-size:10px;font-weight:bold;color:#555;margin:6px 0 4px;border-bottom:1px solid #eee;padding-bottom:3px;">參考清單 ◇</div>
+  <div class="leg">🍖 牛腸鍋</div>
+  <div class="leg">🦑 海鮮</div>
+  <div class="leg">🍜 拉麵</div>
+  <div class="leg">🍞 麵包/咖啡</div>
+  <div class="leg">🛍️ 購物</div>
+  <div class="leg">🍺 酒吧</div>
+  <div class="leg">🏮 屋台</div>`;
 document.getElementById('map').appendChild(legendEl);
 
 /* 建立所有 marker */
@@ -202,12 +262,43 @@ const markers = {};
 Object.entries(spots).forEach(([id, s]) => {
   const icon = L.divIcon({
     className:'',
-    html:`<div style="font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.4))">${typeIcon[s.type]}</div>`,
-    iconSize:[24,24], iconAnchor:[12,12]
+    html:`<div style="
+      background:${typeColor[s.type]};
+      color:white;
+      width:32px; height:32px;
+      border-radius:50% 50% 50% 0;
+      transform:rotate(-45deg);
+      border:2px solid white;
+      box-shadow:0 2px 6px rgba(0,0,0,0.4);
+      display:flex; align-items:center; justify-content:center;
+    "><span style="transform:rotate(45deg);font-size:15px;line-height:1">${typeIcon[s.type]}</span></div>`,
+    iconSize:[32,32], iconAnchor:[16,32]
   });
   markers[id] = L.marker([s.lat, s.lng], { icon })
     .addTo(map)
     .bindPopup(`<b>${typeIcon[s.type]} ${s.name}</b><br><a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
+});
+
+/* 建立參考地點 marker */
+const refMarkers = {};
+Object.entries(refSpots).forEach(([id, s]) => {
+  const color = refCatColor[s.cat];
+  const icon = L.divIcon({
+    className:'',
+    html:`<div style="
+      width:26px; height:26px;
+      border-radius:4px;
+      transform:rotate(45deg);
+      border:2.5px solid ${color};
+      background:white;
+      box-shadow:0 1px 5px rgba(0,0,0,0.35);
+      display:flex; align-items:center; justify-content:center;
+    "><span style="transform:rotate(-45deg);font-size:13px;line-height:1">${refCatIcon[s.cat]}</span></div>`,
+    iconSize:[26,26], iconAnchor:[13,13]
+  });
+  refMarkers[id] = L.marker([s.lat, s.lng], { icon })
+    .addTo(map)
+    .bindPopup(`<b>${refCatIcon[s.cat]} ${s.name}</b><br><small style="color:#888">${refCatLabel[s.cat]}</small><br><a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
 });
 
 /* 點擊地點跳轉 */
@@ -216,6 +307,118 @@ function flyTo(id) {
   map.flyTo([s.lat, s.lng], 15, { duration:0.8 });
   setTimeout(() => markers[id].openPopup(), 900);
 }
+function flyToRef(id) {
+  const s = refSpots[id];
+  map.flyTo([s.lat, s.lng], 16, { duration:0.8 });
+  setTimeout(() => refMarkers[id].openPopup(), 900);
+}
+
+/* 建立每天的地點 ID 集合 */
+const daySpotIds = {};
+days.forEach(day => {
+  const ids = new Set();
+  day.rows.forEach(row => {
+    if (row.spot) ids.add(row.spot);
+    if (row.spot2) ids.add(row.spot2);
+  });
+  daySpotIds[day.label] = ids;
+});
+
+/* 淡化／還原 marker */
+function setMarkersOpacity(activeDayLabel) {
+  Object.entries(markers).forEach(([id, marker]) => {
+    const el = marker.getElement();
+    if (!el) return;
+    if (!activeDayLabel) {
+      el.style.opacity = '1';
+      el.style.filter = '';
+    } else if (daySpotIds[activeDayLabel] && daySpotIds[activeDayLabel].has(id)) {
+      el.style.opacity = '1';
+      el.style.filter = '';
+    } else {
+      el.style.opacity = '0.45';
+      el.style.filter = 'grayscale(80%)';
+    }
+  });
+  // 參考地點：選天路線時一律淡化
+  Object.values(refMarkers).forEach(marker => {
+    const el = marker.getElement();
+    if (!el) return;
+    el.style.opacity = activeDayLabel ? '0.3' : '1';
+    el.style.filter = activeDayLabel ? 'grayscale(90%)' : '';
+  });
+}
+
+/* 當天路線連線 */
+let activeLayers = [];
+let activeDay = null;
+
+function clearRoute() {
+  activeLayers.forEach(l => map.removeLayer(l));
+  activeLayers = [];
+}
+
+function toggleDayRoute(day) {
+  // 收集當天有座標的地點（依順序）
+  const coords = [];
+  day.rows.forEach(row => {
+    if (row.spot && spots[row.spot]) coords.push([spots[row.spot].lat, spots[row.spot].lng]);
+    if (row.spot2 && spots[row.spot2]) coords.push([spots[row.spot2].lat, spots[row.spot2].lng]);
+  });
+  if (coords.length < 2) return;
+
+  // 若已顯示同一天 → 取消
+  if (activeDay === day.label) {
+    clearRoute();
+    setMarkersOpacity(null);
+    activeDay = null;
+    return;
+  }
+
+  clearRoute();
+
+  // 閉合：最後一點回到第一點（住宿）
+  const closedCoords = [...coords, coords[0]];
+
+  // 畫路線
+  const line = L.polyline(closedCoords, {
+    color: day.color,
+    weight: 3,
+    opacity: 0.85,
+    dashArray: '8, 5'
+  }).addTo(map);
+  activeLayers.push(line);
+
+  // 加箭頭
+  const decorator = L.polylineDecorator(line, {
+    patterns: [{
+      offset: '5%',
+      repeat: '15%',
+      symbol: L.Symbol.arrowHead({
+        pixelSize: 10,
+        polygon: false,
+        pathOptions: {
+          color: day.color,
+          weight: 2.5,
+          opacity: 1
+        }
+      })
+    }]
+  }).addTo(map);
+  activeLayers.push(decorator);
+
+  activeDay = day.label;
+  setMarkersOpacity(day.label);
+  map.fitBounds(line.getBounds(), { padding:[40,40] });
+}
+
+/* 點擊地圖空白處 → 恢復全部 */
+map.on('click', () => {
+  if (!activeDay) return;
+  clearRoute();
+  setMarkersOpacity(null);
+  activeDay = null;
+});
 
 /* ── 建立行程 HTML ── */
 const itinEl = document.getElementById('itin');
@@ -227,7 +430,10 @@ days.forEach(day => {
   const title = document.createElement('div');
   title.className = 'day-title';
   title.style.background = day.color;
-  title.textContent = day.label;
+  title.textContent = day.label + '  🗺️';
+  title.style.cursor = 'pointer';
+  title.title = '點擊顯示當天路線';
+  title.addEventListener('click', () => toggleDayRoute(day));
   block.appendChild(title);
 
   const weather = document.createElement('div');
@@ -283,6 +489,67 @@ days.forEach(day => {
 
   itinEl.appendChild(block);
 });
+
+/* ── 參考清單 ── */
+const refBlock = document.createElement('div');
+refBlock.style.cssText = 'border-bottom:2px solid #eee;';
+
+const refTitle = document.createElement('div');
+refTitle.className = 'day-title';
+refTitle.style.cssText = 'background:#546e7a; cursor:default;';
+refTitle.textContent = '📌 參考清單';
+refBlock.appendChild(refTitle);
+
+// 分組順序
+const catOrder = ['motsu','seafood','ramen','bread','shop','bar','yatai'];
+const grouped = {};
+catOrder.forEach(c => grouped[c] = []);
+Object.entries(refSpots).forEach(([id,s]) => grouped[s.cat].push({id,...s}));
+
+catOrder.forEach(cat => {
+  if (!grouped[cat].length) return;
+  // 分類小標題
+  const catHead = document.createElement('div');
+  catHead.style.cssText = `
+    padding:5px 14px 3px;
+    font-size:11px; font-weight:bold;
+    color:${refCatColor[cat]};
+    background:#f4f4f4;
+    border-top:1px solid #e8e8e8;
+    letter-spacing:0.5px;
+  `;
+  catHead.textContent = `${refCatIcon[cat]} ${refCatLabel[cat]}`;
+  refBlock.appendChild(catHead);
+
+  grouped[cat].forEach(s => {
+    const row = document.createElement('div');
+    row.className = 'itin-row';
+    row.style.paddingLeft = '20px';
+
+    const dot = document.createElement('span');
+    dot.style.cssText = `
+      display:inline-block; width:8px; height:8px;
+      border-radius:2px; border:2px solid ${refCatColor[s.cat]};
+      flex-shrink:0; margin-top:4px;
+    `;
+    row.appendChild(dot);
+
+    const btn = document.createElement('button');
+    btn.className = 'map-link';
+    btn.style.color = '#333';
+    btn.style.textDecoration = 'none';
+    btn.innerHTML = `${s.name} &nbsp;<span style="font-size:10px;color:#1a73e8;">📍</span>`;
+    btn.onclick = () => flyToRef(s.id);
+    row.appendChild(btn);
+
+    refBlock.appendChild(row);
+  });
+});
+
+itinEl.appendChild(refBlock);
+
+// 確保地圖重新計算尺寸
+setTimeout(() => map.invalidateSize(), 100);
 </script>
 </body>
 </html>
