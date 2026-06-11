@@ -210,7 +210,7 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
 /* ── 地點資料 ── */
 const spots = {
   airport_fuk:   { name:"福岡機場", type:"airport", lat:33.5853, lng:130.4511 },
-  hotel_forza:   { name:"HOTEL FORZA HAKATA-GUCHI", type:"hotel", lat:33.59083, lng:130.41777, gname:"ホテルフォルツァ博多駅博多口" },
+  hotel_forza:   { name:"HOTEL FORZA HAKATA-GUCHI", type:"hotel", lat:33.59083, lng:130.41777, useCoords:true },
   airbnb_tabisai:{ name:"Airbnb－TABISAI HOTEL TERRACE 博多", type:"hotel", lat:33.580586, lng:130.418312, gname:"TABISAI HOTEL TERRACE 博多" },
   teamlab:       { name:"teamLab Forest Fukuoka", type:"spot", lat:33.595302, lng:130.363752 },
   ryuen:         { name:"日本料理 てら岡 中洲本店", type:"restaurant", lat:33.593571, lng:130.404683 },
@@ -255,7 +255,7 @@ const refSpots = {
   fullful:      { name:"The Full Full Hakata", cat:"bread", lat:33.589928, lng:130.412529 },
   sansui:       { name:"山水水出珈琲", cat:"bread", lat:33.594606, lng:130.405984 },
   little_stand: { name:"Little Stand Daimyo", cat:"bread", lat:33.586292, lng:130.394969 },
-  yatai:        { name:"中洲の屋台街", cat:"yatai", lat:33.5894, lng:130.4075 },
+  yatai:        { name:"中洲屋台橫丁", cat:"yatai", lat:33.5894, lng:130.4075, gname:"福岡県中洲屋台橫丁" },
 };
 
 const refCatColor = {
@@ -1045,6 +1045,20 @@ function botReply(q) {
       transition:transform 0.22s ease, opacity 0.22s ease;
     }
     #chat-panel.open { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
+    @media (max-width:767px) {
+      #chat-panel {
+        bottom:0; left:0; right:0; width:100%; max-width:100%;
+        border-radius:18px 18px 0 0;
+        height:50vh;
+        transform:translateY(100%);
+        transform-origin:bottom center;
+        transition:transform 0.3s cubic-bezier(.4,0,.2,1);
+        opacity:1;
+      }
+      #chat-panel.open { transform:translateY(0); }
+      #chat-messages { max-height:none; }
+      #chat-fab { bottom:16px; right:16px; }
+    }
     #chat-header {
       background:#2c3e50; color:white;
       padding:12px 14px; font-size:13px; font-weight:bold;
@@ -1177,8 +1191,30 @@ function botReply(q) {
   addMsg('你好！我是福岡旅遊助理 🗾\n問我行程、天氣、住宿、餐廳、景點等問題，或點下方快捷按鈕！', 'bot');
 
   // 事件
-  fab.onclick = () => { panel.classList.toggle('open'); };
-  panel.querySelector('#chat-close').onclick = () => { panel.classList.remove('open'); highlightDay(null); };
+  function openPanel() {
+    if (window.innerWidth <= 767) {
+      panel.style.transition = 'none';
+      panel.style.transform = 'translateY(0)';
+      panel.classList.add('open');
+      panel.getBoundingClientRect();
+      panel.style.transition = '';
+    } else {
+      panel.classList.add('open');
+    }
+  }
+  function closePanel() {
+    if (window.innerWidth <= 767) {
+      panel.style.transition = 'none';
+      panel.style.transform = 'translateY(100%)';
+      panel.classList.remove('open');
+      panel.getBoundingClientRect();
+      panel.style.transition = '';
+    } else {
+      panel.classList.remove('open');
+    }
+  }
+  fab.onclick = () => { panel.classList.contains('open') ? closePanel() : openPanel(); };
+  panel.querySelector('#chat-close').onclick = () => { closePanel(); highlightDay(null); };
   panel.querySelector('#chat-date').onchange = e => { highlightDay(e.target.value || null); };
   panel.querySelector('#chat-send').onclick = () => ask(panel.querySelector('#chat-input').value);
   panel.querySelector('#chat-input').onkeydown = e => { if (e.key==='Enter') ask(e.target.value); };
