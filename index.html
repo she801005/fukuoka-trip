@@ -183,6 +183,9 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
   #fab:active { background:#1a252f; }
 
   #legend { top:8px; right:8px; font-size:10px; padding:6px 9px; }
+  #legend-toggle { display:block !important; }
+  #legend-body { display:none; margin-top:4px; }
+  #legend-body.open { display:block; }
   #map { flex:1; width:100%; }
 }
 
@@ -207,8 +210,8 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
 /* ── 地點資料 ── */
 const spots = {
   airport_fuk:   { name:"福岡機場", type:"airport", lat:33.5853, lng:130.4511 },
-  hotel_forza:   { name:"HOTEL FORZA HAKATA-GUCHI", type:"hotel", lat:33.59083, lng:130.41777 },
-  airbnb_tabisai:{ name:"Airbnb－TABISAI HOTEL TERRACE 博多", type:"hotel", lat:33.580586, lng:130.418312 },
+  hotel_forza:   { name:"HOTEL FORZA HAKATA-GUCHI", type:"hotel", lat:33.59083, lng:130.41777, gname:"ホテルフォルツァ博多駅博多口" },
+  airbnb_tabisai:{ name:"Airbnb－TABISAI HOTEL TERRACE 博多", type:"hotel", lat:33.580586, lng:130.418312, gname:"TABISAI HOTEL TERRACE 博多" },
   teamlab:       { name:"teamLab Forest Fukuoka", type:"spot", lat:33.595302, lng:130.363752 },
   ryuen:         { name:"日本料理 てら岡 中洲本店", type:"restaurant", lat:33.593571, lng:130.404683 },
   shirataki:     { name:"白糸の滝 & ふれあいの里", type:"spot", lat:33.480199, lng:130.175450 },
@@ -218,7 +221,7 @@ const spots = {
   jigoku_cook:   { name:"地獄蒸し工房 鐵輪", type:"restaurant", lat:33.3154852, lng:131.4762201 },
   umi_jigoku:    { name:"海地獄", type:"spot", lat:33.315228, lng:131.468716 },
   kama_jigoku:   { name:"かまど地獄", type:"spot", lat:33.316393, lng:131.472737 },
-  airbnb_yufu:   { name:"Airbnb 由布院（久保的小屋）", type:"hotel", lat:33.265018, lng:131.354122 },
+  airbnb_yufu:   { name:"Airbnb 由布院(Yoshino Sakura 湯めぐりの館 吉野桜)", type:"hotel", lat:33.265018, lng:131.354122, gname:"湯めぐりの館 吉野桜" },
   wakakae:       { name:"稚加榮 福岡店", type:"restaurant", lat:33.5878, lng:130.392089 },
   marine_world:  { name:"Marine World 海之中道水族館", type:"spot", lat:33.660975, lng:130.363478 },
   ishida:        { name:"博多 石田 精緻和食", type:"restaurant", lat:33.591757, lng:130.406848 },
@@ -378,20 +381,29 @@ function diamondSvg(color) {
   </svg>`;
 }
 legendEl.innerHTML = `
-  <div style="font-size:10px;font-weight:bold;color:#555;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:3px;">主行程</div>
-  <div class="leg">${pinSvg('#e74c3c')} ✈️ 機場</div>
-  <div class="leg">${pinSvg('#3498db')} 🏠 住宿</div>
-  <div class="leg">${pinSvg('#e67e22')} 🍜 餐廳</div>
-  <div class="leg">${pinSvg('#27ae60')} 📍 景點</div>
-  <div style="font-size:10px;font-weight:bold;color:#555;margin:6px 0 4px;border-bottom:1px solid #eee;padding-bottom:3px;">參考清單 ◇</div>
-  <div class="leg">🍖 牛腸鍋</div>
-  <div class="leg">🦑 海鮮</div>
-  <div class="leg">🍜 拉麵</div>
-  <div class="leg">🍞 麵包/咖啡</div>
-  <div class="leg">🛍️ 購物</div>
-  <div class="leg">🍺 酒吧</div>
-  <div class="leg">🏮 屋台</div>`;
+  <div id="legend-toggle" style="display:none;font-size:11px;font-weight:bold;color:#555;cursor:pointer;user-select:none;">圖例 ▾</div>
+  <div id="legend-body">
+    <div style="font-size:10px;font-weight:bold;color:#555;margin-bottom:4px;border-bottom:1px solid #eee;padding-bottom:3px;">主行程</div>
+    <div class="leg">${pinSvg('#e74c3c')} ✈️ 機場</div>
+    <div class="leg">${pinSvg('#3498db')} 🏠 住宿</div>
+    <div class="leg">${pinSvg('#e67e22')} 🍜 餐廳</div>
+    <div class="leg">${pinSvg('#27ae60')} 📍 景點</div>
+    <div style="font-size:10px;font-weight:bold;color:#555;margin:6px 0 4px;border-bottom:1px solid #eee;padding-bottom:3px;">參考清單 ◇</div>
+    <div class="leg">🍖 牛腸鍋</div>
+    <div class="leg">🦑 海鮮</div>
+    <div class="leg">🍜 拉麵</div>
+    <div class="leg">🍞 麵包/咖啡</div>
+    <div class="leg">🛍️ 購物</div>
+    <div class="leg">🍺 酒吧</div>
+    <div class="leg">🏮 屋台</div>
+  </div>`;
 document.getElementById('map').appendChild(legendEl);
+document.getElementById('legend-toggle').onclick = () => {
+  const body = document.getElementById('legend-body');
+  const btn = document.getElementById('legend-toggle');
+  const open = body.classList.toggle('open');
+  btn.textContent = open ? '圖例 ▴' : '圖例 ▾';
+};
 
 /* 建立所有 marker */
 const markers = {};
@@ -412,7 +424,7 @@ Object.entries(spots).forEach(([id, s]) => {
   });
   markers[id] = L.marker([s.lat, s.lng], { icon })
     .addTo(map)
-    .bindPopup(`<b>${typeIcon[s.type]} ${s.name}</b><br><a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
+    .bindPopup(`<b>${typeIcon[s.type]} ${s.name}</b><br><a href="${s.useCoords ? `https://www.google.com/maps?q=${s.lat},${s.lng}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.gname||s.name)}&center=${s.lat},${s.lng}`}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
 });
 
 /* 建立參考地點 marker */
@@ -434,7 +446,7 @@ Object.entries(refSpots).forEach(([id, s]) => {
   });
   refMarkers[id] = L.marker([s.lat, s.lng], { icon })
     .addTo(map)
-    .bindPopup(`<b>${refCatIcon[s.cat]} ${s.name}</b><br><small style="color:#888">${refCatLabel[s.cat]}</small><br><a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
+    .bindPopup(`<b>${refCatIcon[s.cat]} ${s.name}</b><br><small style="color:#888">${refCatLabel[s.cat]}</small><br><a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(s.name)}&center=${s.lat},${s.lng}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
 });
 
 /* 依日期高亮/淡化 markers */
@@ -812,7 +824,7 @@ const botData = {
     '6/16':'HOTEL FORZA HAKATA-GUCHI（博多）',
     '6/17':'Airbnb－TABISAI HOTEL TERRACE 博多',
     '6/18':'Airbnb－TABISAI HOTEL TERRACE 博多',
-    '6/19':'Airbnb 由布院（久保的小屋）',
+    '6/19':'Airbnb 由布院(Yoshino Sakura 湯めぐりの館 吉野桜)',
     '6/20':'THE 皇家花園 Canvas 福岡中洲',
     '6/21':'（返台，無住宿）'
   },
