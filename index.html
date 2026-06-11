@@ -62,12 +62,42 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
   font-size:11.5px; color:#666; border-radius:0 6px 6px 0;
 }
 
+/* ── 航班區塊 ── */
+.flight-section {
+  margin:6px 10px 10px;
+  background:#eaf4ff;
+  border:1px solid #b8d9f5;
+  border-radius:8px;
+  overflow:hidden;
+}
+.flight-section-title {
+  background:#c8e4f8; color:#1a5276;
+  font-size:11px; font-weight:bold;
+  padding:4px 10px; letter-spacing:0.5px;
+}
+.flight-row {
+  display:flex; align-items:flex-start; gap:8px;
+  padding:6px 10px; font-size:11.5px; color:#333;
+  border-top:1px solid #d4eaf8;
+}
+.flight-row:first-of-type { border-top:none; }
+.flight-badge {
+  flex-shrink:0; font-size:10px; font-weight:bold;
+  padding:2px 6px; border-radius:10px; color:white;
+  background:#2980b9;
+}
+.flight-badge.arr { background:#27ae60; }
+.flight-badge.dep { background:#e74c3c; }
+.flight-warn {
+  font-size:10.5px; color:#c0392b; margin-top:2px;
+}
+
 /* ── 地圖 ── */
 #map { flex:1; min-width:0; position:relative; }
 
 /* 圖例 */
 #legend {
-  position:absolute; bottom:28px; right:10px; z-index:1000;
+  position:absolute; top:10px; right:10px; z-index:1000;
   background:white; border-radius:8px; padding:8px 12px;
   box-shadow:0 2px 8px rgba(0,0,0,0.2); font-size:11px;
 }
@@ -152,7 +182,7 @@ body { font-family:'Segoe UI','Microsoft JhengHei',sans-serif; background:#f0f2f
   }
   #fab:active { background:#1a252f; }
 
-  #legend { bottom:16px; right:8px; font-size:10px; padding:6px 9px; }
+  #legend { top:8px; right:8px; font-size:10px; padding:6px 9px; }
   #map { flex:1; width:100%; }
 }
 
@@ -180,7 +210,7 @@ const spots = {
   hotel_forza:   { name:"HOTEL FORZA HAKATA-GUCHI", type:"hotel", lat:33.59083, lng:130.41777 },
   airbnb_tabisai:{ name:"Airbnb－TABISAI HOTEL TERRACE 博多", type:"hotel", lat:33.580586, lng:130.418312 },
   teamlab:       { name:"teamLab Forest Fukuoka", type:"spot", lat:33.595302, lng:130.363752 },
-  ryuen:         { name:"燒肉の龍園 西中洲店", type:"restaurant", lat:33.590964, lng:130.406241 },
+  ryuen:         { name:"日本料理 てら岡 中洲本店", type:"restaurant", lat:33.593571, lng:130.404683 },
   shirataki:     { name:"白糸の滝 & ふれあいの里", type:"spot", lat:33.480199, lng:130.175450 },
   tsukamoto:     { name:"塚本鮮魚店", type:"restaurant", lat:33.546461, lng:130.169341 },
   hakatami:      { name:"水炊料理 博多華味鳥 中洲本店", type:"restaurant", lat:33.593985, lng:130.403742 },
@@ -196,6 +226,7 @@ const spots = {
   hakata_sta:    { name:"博多車站美食街", type:"spot", lat:33.5898, lng:130.4208 },
   shirogane:     { name:"藥院大通", type:"spot", lat:33.580578, lng:130.396647 },
   tenjin_ug:     { name:"天神地下街", type:"spot", lat:33.591616, lng:130.399409 },
+  anpanman:      { name:"福岡麵包超人博物館", type:"spot", lat:33.594606, lng:130.405984 },
 };
 
 const typeColor = { airport:"#e74c3c", hotel:"#3498db", restaurant:"#e67e22", spot:"#27ae60" };
@@ -243,8 +274,10 @@ const days = [
     label:"0️⃣ 6/16 (二) 福岡", color:"#7f8c8d",
     weather:"🌤️ 晴時多雲　30°C／21°C　降水確率 60%",
     rows:[
-      { ico:"✈️", text:"班機：CI116 16:40-20:00　｜　桃園 T2 出發　→　福岡 國際線航廈 入境" },
       { ico:"🏠", text:"住：", spot:"hotel_forza" },
+    ],
+    flights:[
+      { type:'arr', no:'CI116', time:'16:40 → 20:00', route:'桃園 T2 → 福岡 國際線' },
     ]
   },
   {
@@ -256,6 +289,9 @@ const days = [
       { ico:"📍", text:"16:00-18:00　", spot:"teamlab", after:"（建議停留 1.5～2 小時）" },
       { ico:"🍜", text:"18:30　晚餐：", spot:"ryuen" },
       { ico:"🏠", text:"住：", spot:"airbnb_tabisai" },
+    ],
+    flights:[
+      { type:'arr', no:'JX840', time:'09:35 → 13:05', route:'桃園 T2 → 福岡 國際線', warn:'上午活動（天神散步）出發前抵達' },
     ]
   },
   {
@@ -291,19 +327,31 @@ const days = [
       { ico:"🍜", text:"12:30　午餐：", spot:"wakakae", after:"（百年老店，海鮮丼超豐盛）" },
       { ico:"📍", text:"14:30-16:30　", spot:"marine_world", after:"（海豚、企鵝、白鯨）" },
       { ico:"🍜", text:"18:30　晚餐：", spot:"ishida", after:"（和牛 & 季節料理）" },
-      { ico:"🛍️", text:"21:00　自由活動，逛中洲 / 買伴手禮" },
+      { ico:"🛍️", text:"自由活動，逛中洲 / 買伴手禮" },
       { ico:"🏠", text:"住：", spot:"royal_canvas" },
+    ],
+    flights:[
+      { type:'dep', no:'JX841', time:'14:15 → 15:45', route:'福岡 國際線 → 桃園 T2', warn:'建議 12:15 前到機場，Marine World & 晚餐行程無法參加' },
+      { type:'dep', no:'BR101', time:'19:20 → 20:45', route:'福岡 國際線 → 桃園 T2', warn:'建議 17:20 前到機場，晚餐行程無法參加' },
     ]
   },
   {
     label:"5️⃣ 6/21 (日) 福岡", color:"#2980b9",
     weather:"🌦️ 多雲　27°C／20°C　降水確率 70%",
-    note:"※ 附近有福岡麵包超人博物館（建議 10:00 入館，玩樂約 1.5 小時），如班機改為下午班次可排入。",
     rows:[
       { ico:"🍜", text:"07:30　飯店早餐" },
       { ico:"🧳", text:"09:00　整理退房，寄放行李" },
-      { ico:"🛍️", text:"09:30　", spot:"hakata_sta", after:"& 福岡機場伴手禮採購" },
-      { ico:"✈️", text:"班機：CI111 11:00-12:30　｜　福岡 國際線航廈 出發　→　桃園 T2 入境　", spot:"airport_fuk" },
+      { ico:"🚌", text:"09:30　前往麵包超人博物館（車程約 30 分鐘）" },
+      { ico:"📍", text:"10:00-11:30　", spot:"anpanman", after:"（玩樂 1.5 小時）" },
+      { ico:"🍜", text:"11:30　午餐：", spot:"hakata_sta" },
+      { ico:"🛍️", text:"13:00　福岡機場伴手禮採買" },
+      { ico:"🚌", text:"14:30　前往福岡機場（車程約 15 分鐘）" },
+      { ico:"🧳", text:"15:00　辦理登機手續 & 通關" },
+    ],
+    flights:[
+      { type:'dep', no:'CI111', time:'11:00 → 12:30', route:'福岡 國際線 → 桃園 T2', warn:'建議 08:30 前到機場，退房後直接前往，跳過博物館行程' },
+      { type:'dep', no:'JX841', time:'14:15 → 15:45', route:'福岡 國際線 → 桃園 T2', warn:'建議 11:45 前到機場，可參加博物館，午餐在機場解決' },
+      { type:'dep', no:'CI117', time:'16:35 → 18:10', route:'福岡 國際線 → 桃園 T2', warn:'建議 14:00 前到機場，完整配合本日行程' },
     ]
   },
 ];
@@ -388,6 +436,28 @@ Object.entries(refSpots).forEach(([id, s]) => {
     .addTo(map)
     .bindPopup(`<b>${refCatIcon[s.cat]} ${s.name}</b><br><small style="color:#888">${refCatLabel[s.cat]}</small><br><a href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}" target="_blank" style="font-size:11px;color:#1a73e8;">📍 在 Google Maps 開啟</a>`);
 });
+
+/* 依日期高亮/淡化 markers */
+function highlightDay(date) {
+  const ds = {};
+  days.forEach((day, i) => {
+    const d = botData.dayMap[String(i)];
+    if (d) {
+      ds[d] = day.rows.flatMap(r => [r.spot, r.spot2].filter(Boolean));
+      if (day.flights && day.flights.length) ds[d].push('airport_fuk');
+    }
+  });
+  Object.entries(markers).forEach(([id, m]) => {
+    const active = !date || (ds[date] && ds[date].includes(id));
+    const el = m.getElement();
+    if (el) el.style.filter = active ? '' : 'grayscale(1) opacity(0.5)';
+  });
+  // 選特定日期時隱藏參考清單 markers
+  Object.values(refMarkers).forEach(m => {
+    const el = m.getElement();
+    if (el) el.style.display = date ? 'none' : '';
+  });
+}
 
 /* 點擊地點跳轉 */
 function flyTo(id) {
@@ -575,6 +645,36 @@ days.forEach(day => {
     block.appendChild(note);
   }
 
+  // 航班區塊
+  if (day.flights && day.flights.length) {
+    const fs = document.createElement('div');
+    fs.className = 'flight-section';
+    const ft = document.createElement('div');
+    ft.className = 'flight-section-title';
+    ft.textContent = '✈️ 當日航班';
+    fs.appendChild(ft);
+    day.flights.forEach(f => {
+      const fr = document.createElement('div');
+      fr.className = 'flight-row';
+      const badge = document.createElement('span');
+      badge.className = 'flight-badge ' + (f.type === 'arr' ? 'arr' : 'dep');
+      badge.textContent = f.type === 'arr' ? '抵達' : '出發';
+      const info = document.createElement('div');
+      info.style.flex = '1';
+      info.innerHTML = `<b>${f.no}</b>　${f.time}<br><span style="color:#555;font-size:11px">${f.route}</span>`;
+      if (f.warn) {
+        const w = document.createElement('div');
+        w.className = 'flight-warn';
+        w.textContent = '⚠️ ' + f.warn;
+        info.appendChild(w);
+      }
+      fr.appendChild(badge);
+      fr.appendChild(info);
+      fs.appendChild(fr);
+    });
+    block.appendChild(fs);
+  }
+
   itinEl.appendChild(block);
 });
 
@@ -682,6 +782,397 @@ function closeDrawer() {
       drawer.style.transform = '';
     }
     dragging = false;
+  });
+})();
+
+/* ══════════════════════════════════════
+   旅遊助理機器人
+══════════════════════════════════════ */
+const botData = {
+  trip: { start:'6/16', end:'6/21', days:6, dest:'福岡・別府・由布院' },
+  flights: {
+    out: [
+      { no:'CI116', date:'6/16', dep:'16:40', arr:'20:00', note:'桃園 T2 → 福岡 國際線' },
+      { no:'JX840', date:'6/17', dep:'09:35', arr:'13:05', note:'桃園 T2 → 福岡 國際線（第二批）' }
+    ],
+    back: [
+      { no:'JX841', date:'6/20', dep:'14:15', arr:'15:45', note:'福岡 國際線 → 桃園 T2（建議 12:15 前到機場）' },
+      { no:'BR101', date:'6/20', dep:'19:20', arr:'20:45', note:'福岡 國際線 → 桃園 T2（建議 17:20 前到機場）' },
+      { no:'CI111', date:'6/21', dep:'11:00', arr:'12:30', note:'福岡 國際線 → 桃園 T2（建議 08:30 前到機場）' },
+      { no:'JX841', date:'6/21', dep:'14:15', arr:'15:45', note:'福岡 國際線 → 桃園 T2（建議 11:45 前到機場）' },
+      { no:'CI117', date:'6/21', dep:'16:35', arr:'18:10', note:'福岡 國際線 → 桃園 T2（建議 14:00 前到機場）' },
+    ]
+  },
+  dayMap: {
+    '0':'6/16','1':'6/17','2':'6/18','3':'6/19','4':'6/20','5':'6/21',
+    '6/16':'0','6/17':'1','6/18':'2','6/19':'3','6/20':'4','6/21':'5'
+  },
+  dayNames: ['6/16 (二) 抵達福岡','6/17 (三) 福岡','6/18 (四) 糸島','6/19 (五) 別府 & 由布院','6/20 (六) 福岡','6/21 (日) 返台'],
+  hotels: {
+    '6/16':'HOTEL FORZA HAKATA-GUCHI（博多）',
+    '6/17':'Airbnb－TABISAI HOTEL TERRACE 博多',
+    '6/18':'Airbnb－TABISAI HOTEL TERRACE 博多',
+    '6/19':'Airbnb 由布院（久保的小屋）',
+    '6/20':'THE 皇家花園 Canvas 福岡中洲',
+    '6/21':'（返台，無住宿）'
+  },
+  weather: {
+    '6/16':'🌤️ 晴時多雲　30°C／21°C　降水確率 60%',
+    '6/17':'☀️ 晴　31°C／22°C　降水確率 30%',
+    '6/18':'🌧️ 雨　24°C／21°C　降水確率 90%',
+    '6/19':'🌧️ 雨時々曇　27°C／21°C　降水確率 80%',
+    '6/20':'🌦️ 多雲有雨　25°C／20°C　降水確率 70%',
+    '6/21':'🌦️ 多雲　27°C／20°C　降水確率 70%'
+  },
+  restaurants: [
+    { day:'6/17', meal:'晚餐', name:'日本料理 てら岡 中洲本店', spot:'ryuen' },
+    { day:'6/18', meal:'午餐', name:'塚本鮮魚店（糸島）', spot:'tsukamoto' },
+    { day:'6/18', meal:'晚餐', name:'水炊料理 博多華味鳥 中洲本店', spot:'hakatami' },
+    { day:'6/19', meal:'午餐', name:'地獄蒸し工房 鐵輪（溫泉蒸氣料理）', spot:'jigoku_cook' },
+    { day:'6/20', meal:'午餐', name:'稚加榮 福岡店（百年老店海鮮丼）', spot:'wakakae' },
+    { day:'6/20', meal:'晚餐', name:'博多 石田 精緻和食（和牛 & 季節料理）', spot:'ishida' },
+    { day:'6/21', meal:'午餐', name:'博多車站美食街', spot:'hakata_sta' }
+  ],
+  spotsByDay: {
+    '6/17':[{name:'天神地下街 / 藥院大通（散步）',spots:['tenjin_ug','shirogane']},{name:'teamLab Forest Fukuoka（16:00–18:00）',spots:['teamlab']}],
+    '6/18':[{name:'白糸の滝 & ふれあいの里（10:00–12:30）',spots:['shirataki']},{name:'糸島海邊咖啡廳（14:30–16:30）',spots:[]}],
+    '6/19':[{name:'九州自然動物公園 African Safari（11:30–14:00）',spots:['safari']},{name:'別府地獄巡禮：海地獄 & かまど地獄（15:30–16:30）',spots:['umi_jigoku','kama_jigoku']}],
+    '6/20':[{name:'Marine World 海之中道水族館（14:30–16:30）',spots:['marine_world']},{name:'中洲自由活動',spots:[]}],
+    '6/21':[{name:'麵包超人博物館（10:00–11:30）',spots:['anpanman']},{name:'博多車站美食街＋伴手禮採購',spots:['hakata_sta']}]
+  }
+};
+
+/* 產生可點擊地點連結 */
+function sl(id) {
+  if (!id || !spots[id]) return '';
+  return `<a href="#" class="bot-spot-link" data-id="${id}" data-type="main">${spots[id].name}</a>`;
+}
+const dateLabel = {
+  '6/16':'6/16 (二)', '6/17':'6/17 (三)', '6/18':'6/18 (四)',
+  '6/19':'6/19 (五)', '6/20':'6/20 (六)', '6/21':'6/21 (日)'
+};
+const hotelSpotMap = {
+  '6/16': 'hotel_forza',
+  '6/17': 'airbnb_tabisai',
+  '6/18': 'airbnb_tabisai',
+  '6/19': 'airbnb_yufu',
+  '6/20': 'royal_canvas',
+  '6/21': null
+};
+
+function botReply(q) {
+  const t = q.toLowerCase().replace(/\s/g,'');
+
+  // 找日期（提前）
+  const dateMatch = t.match(/6\/(1[6-9]|2[01])/);
+  const date = dateMatch ? dateMatch[0] : null;
+
+  // 打招呼
+  if (/你好|哈囉|hi|hello|嗨|早|晚/.test(t))
+    return '你好！我是福岡旅遊助理 🗾\n可以問我：行程、天氣、住宿、餐廳、景點，或輸入「幫助」看完整功能 😊';
+
+  // 幫助
+  if (/幫助|help|功能|可以問|怎麼用/.test(t))
+    return '📋 可以問我：\n• 「行程」— 當天完整行程（請先選日期）\n• 「6/18 天氣」— 當天天氣\n• 「住宿」或「6/19 住哪」\n• 「餐廳」或「6/20 吃什麼」\n• 「班機」— 出發/回程資訊\n• 「幾號去別府」「teamlab幾點」等';
+
+  // 行程 - 當天完整行程
+  if (/行程/.test(t)) {
+    if (date) {
+      const dayIdx = botData.dayMap[date];
+      if (dayIdx !== undefined) {
+        const day = days[parseInt(dayIdx)];
+        const lines = day.rows.map(r => {
+          let txt = r.ico + ' ' + r.text.trim();
+          if (r.spot && spots[r.spot]) txt += sl(r.spot);
+          if (r.after) txt += r.after;
+          return txt;
+        });
+        const flightLines = (day.flights||[]).map(f=>
+          `✈️ ${f.no} ${f.time} ${f.route}`
+        );
+        const result = `📅 ${dateLabel[date]||date} 完整行程：\n` + lines.join('\n');
+        return flightLines.length ? result + `\n\n✈️ 當日航班：\n` + flightLines.join('\n') : result;
+      }
+    }
+    // 無日期 → 全部完整行程
+    const nums = ['0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣'];
+    return `🗾 福岡旅遊　${botData.trip.start}–${botData.trip.end}（${botData.trip.days}天）\n\n` +
+      days.map((day, i) => {
+        const lines = day.rows.map(r => {
+          let txt = r.ico + ' ' + r.text.trim();
+          if (r.spot && spots[r.spot]) txt += sl(r.spot);
+          if (r.after) txt += r.after;
+          if (r.spot2 && spots[r.spot2]) txt += sl(r.spot2);
+          return txt;
+        });
+        const flightLines = (day.flights||[]).map(f => `✈️ ${f.no} ${f.time} ${f.route}`);
+        let block = `${nums[i]} ${botData.dayNames[i]}\n` + lines.join('\n');
+        if (flightLines.length) block += `\n✈️ 當日航班：\n` + flightLines.join('\n');
+        return block;
+      }).join('\n\n─────────────\n\n');
+  }
+
+  // 班機
+  if (/班機|飛機|幾點飛|幾點到|回程|ci1|jx8|br1|航班/.test(t)) {
+    const f = botData.flights;
+    if (date) {
+      const dayFlights = [...f.out, ...f.back].filter(v => v.date === date);
+      if (dayFlights.length)
+        return `✈️ ${dateLabel[date]||date} 航班：\n` + dayFlights.map(v=>`• ${v.no}　${v.dep}→${v.arr}\n  ${v.note}`).join('\n');
+      return `${dateLabel[date]||date} 無航班安排。`;
+    }
+    const outStr = f.out.map(v=>`✈️ ${v.no}　${dateLabel[v.date]||v.date} ${v.dep}→${v.arr}　${v.note}`).join('\n');
+    const backStr = f.back.map(v=>`✈️ ${v.no}　${dateLabel[v.date]||v.date} ${v.dep}→${v.arr}　${v.note}`).join('\n');
+    return `【去程】\n${outStr}\n\n【回程】\n${backStr}`;
+  }
+
+  // 天氣
+  if (/天氣|氣溫|幾度|下雨|晴|溫度/.test(t)) {
+    if (date && botData.weather[date])
+      return `📅 ${dateLabel[date]||date} 天氣：\n${botData.weather[date]}`;
+    return '天氣（請指定日期）：\n' +
+      Object.entries(botData.weather).map(([d,w])=>`${dateLabel[d]||d}　${w}`).join('\n');
+  }
+
+  // 住宿
+  if (/住宿|住哪|飯店|airbnb|旅館|check/.test(t)) {
+    if (date && botData.hotels[date]) {
+      const hid = hotelSpotMap[date];
+      const link = hid ? sl(hid) : botData.hotels[date];
+      return `🏠 ${dateLabel[date]||date} 住宿：\n${link}`;
+    }
+    return '🏠 住宿資訊：\n' +
+      Object.entries(botData.hotels).map(([d,h]) => {
+        const hid = hotelSpotMap[d];
+        return `${dateLabel[d]||d}　${hid ? sl(hid) : h}`;
+      }).join('\n');
+  }
+
+  // 餐廳 / 吃什麼
+  if (/餐廳|吃什麼|吃哪|午餐|晚餐|美食|推薦吃/.test(t)) {
+    if (date) {
+      const res = botData.restaurants.filter(r=>r.day===date);
+      if (res.length) return `🍽️ ${dateLabel[date]||date} 餐廳：\n`+res.map(r=>`• ${r.meal}：${r.spot ? sl(r.spot) : r.name}`).join('\n');
+      return `${dateLabel[date]||date} 無特定預訂餐廳，可自由選擇 😊`;
+    }
+    return '🍽️ 餐廳總覽：\n'+botData.restaurants.map(r=>`${dateLabel[r.day]||r.day} ${r.meal}：${r.spot ? sl(r.spot) : r.name}`).join('\n');
+  }
+
+  // 景點
+  if (/景點|去哪|活動|玩什麼/.test(t)) {
+    function renderSpotEntry(s) {
+      const links = s.spots.map(id => sl(id)).filter(Boolean).join(' ');
+      return `• ${s.name}${links ? '　'+links : ''}`;
+    }
+    if (date) {
+      const sp = botData.spotsByDay[date];
+      if (sp) return `📍 ${dateLabel[date]||date} 景點：\n`+sp.map(renderSpotEntry).join('\n');
+      return `${dateLabel[date]||date} 為出發或返台日，無景點安排。`;
+    }
+    return '📍 景點總覽：\n'+Object.entries(botData.spotsByDay).map(([d,ss])=>
+      `${dateLabel[d]||d}：\n`+ss.map(renderSpotEntry).join('\n')
+    ).join('\n');
+  }
+
+  // 特定地點
+  if (/teamlab|teamLab|teamlab/.test(t)) return '🎨 teamLab Forest Fukuoka\n📅 6/17（三）16:00–18:00\n📍 福岡市 地行浜2-2-6\n建議停留 1.5–2 小時';
+  if (/safari|african|動物/.test(t)) return '🦁 九州自然動物公園 African Safari\n📅 6/19（五）11:30–14:00\n📍 大分県宇佐市 安心院町南畑2-1755-1';
+  if (/地獄|別府|beppu/.test(t)) return '♨️ 別府地獄巡禮\n📅 6/19（五）15:30–16:30\n• 海地獄（蔚藍溫泉池）\n• かまど地獄\n📍 別府市鉄輪エリア';
+  if (/由布院|湯布院|yufu/.test(t)) return '🏔️ 由布院\n📅 6/19（五）晚間入住\n住宿：Airbnb 久保的小屋\n📍 湯布院町川上3634-1';
+  if (/白糸|瀑布|waterfall/.test(t)) return '💧 白糸の滝 & ふれあいの里\n📅 6/18（四）10:00–12:30\n📍 糸島市白糸460-6';
+  if (/marine|水族|海之中道/.test(t)) return '🐬 Marine World 海之中道水族館\n📅 6/20（六）14:30–16:30\n• 海豚秀、企鵝、白鯨\n📍 福岡市 西戸崎18-28';
+  if (/糸島|itoshima/.test(t)) return '🌊 6/18（四）糸島日遊\n• 白糸の滝（10:00–12:30）\n• 塚本鮮魚店 午餐\n• 海邊咖啡廳（14:30–16:30）\n交通：福岡市區車程約 60 分鐘';
+  if (/牛腸|もつ鍋|内臓/.test(t)) return '🍖 推薦牛腸鍋：\n• 樂天地 博多站前店\n• 前田屋 博多店\n• 一藤 博多店\n• ちんぷんかんぷん 春吉店\n（側欄「參考清單」可查地圖位置）';
+  if (/拉麵|ramen/.test(t)) return '🍜 推薦拉麵：\n• 博多一幸舎 総本店\n（博多豚骨拉麵代表店）';
+  if (/咖啡|cafe|coffee|パン|麵包/.test(t)) return '☕ 推薦咖啡/麵包：\n• BOUL\'ANGE（本店 & 天神地下街店）\n• AMAM DACOTAN Ropponmatsu\n• FUGLEN KEYAKI DORI\n• 山水水出珈琲\n• Little Stand Daimyo\n• The Full Full Hakata';
+
+  // 參考清單
+  if (/參考|推薦|牛腸|もつ|seafood|海鮮|拉麵|ramen|麵包|bread|購物|shop|酒吧|bar|屋台|yatai/.test(t)) {
+    const catNames = { motsu:'🍖 牛腸鍋', seafood:'🐟 海鮮', ramen:'🍜 拉麵', bread:'🥐 麵包/咖啡', shop:'🛍️ 購物', bar:'🍺 酒吧', yatai:'🏮 屋台' };
+    const grouped = {};
+    Object.entries(refSpots).forEach(([id, s]) => {
+      if (!grouped[s.cat]) grouped[s.cat] = [];
+      grouped[s.cat].push({ id, name: s.name });
+    });
+    return '📋 參考清單（地圖◇圖示）：\n' +
+      Object.entries(grouped).map(([cat, list]) =>
+        `\n${catNames[cat] || cat}\n` +
+        list.map(r => `<a href="#" class="bot-spot-link" data-id="${r.id}" data-type="ref" style="color:#1a73e8;text-decoration:underline;cursor:pointer;">${r.name}</a>`).join('\n')
+      ).join('');
+  }
+
+  // 找不到
+  return '🤔 我不太確定這個問題…\n可以試試問：\n「行程總覽」「6/19 天氣」「住宿」「餐廳」「班機」或輸入「幫助」';
+}
+
+/* ── 聊天 UI ── */
+(function(){
+  // 注入 CSS
+  const style = document.createElement('style');
+  style.textContent = `
+    #chat-fab {
+      position:fixed; bottom:24px; right:16px; z-index:3000;
+      width:auto; height:44px; border-radius:22px;
+      padding:0 14px; gap:6px;
+      background:#2c3e50; color:white; border:none; cursor:pointer;
+      font-size:14px; box-shadow:0 4px 14px rgba(0,0,0,0.35);
+      display:flex; align-items:center; justify-content:center;
+      transition:background 0.2s;
+    }
+    #chat-fab:active { background:#1a252f; }
+    #chat-panel {
+      position:fixed; bottom:86px; right:16px; z-index:2999;
+      width:300px; max-width:calc(100vw - 32px);
+      background:white; border-radius:16px;
+      box-shadow:0 8px 32px rgba(0,0,0,0.22);
+      display:flex; flex-direction:column;
+      overflow:hidden;
+      transform:scale(0.8) translateY(20px);
+      transform-origin:bottom right;
+      opacity:0; pointer-events:none;
+      transition:transform 0.22s ease, opacity 0.22s ease;
+    }
+    #chat-panel.open { transform:scale(1) translateY(0); opacity:1; pointer-events:all; }
+    #chat-header {
+      background:#2c3e50; color:white;
+      padding:12px 14px; font-size:13px; font-weight:bold;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    #chat-close { background:none; border:none; color:white; font-size:18px; cursor:pointer; line-height:1; }
+    #chat-messages {
+      flex:1; overflow-y:auto; padding:12px;
+      display:flex; flex-direction:column; gap:8px;
+      max-height:320px; min-height:120px;
+    }
+    .msg { max-width:85%; padding:8px 11px; border-radius:12px; font-size:12.5px; line-height:1.55; white-space:pre-wrap; }
+    .msg-bot { background:#f0f2f5; color:#222; align-self:flex-start; border-bottom-left-radius:4px; }
+    .msg-user { background:#2c3e50; color:white; align-self:flex-end; border-bottom-right-radius:4px; }
+    #chat-input-row {
+      display:flex; gap:6px; padding:10px 12px;
+      border-top:1px solid #eee;
+    }
+    #chat-input {
+      flex:1; border:1px solid #ddd; border-radius:20px;
+      padding:7px 12px; font-size:12.5px; outline:none;
+      font-family:inherit;
+    }
+    #chat-input:focus { border-color:#2c3e50; }
+    #chat-send {
+      background:#2c3e50; color:white; border:none;
+      border-radius:50%; width:34px; height:34px;
+      cursor:pointer; font-size:14px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    #chat-send:active { background:#1a252f; }
+    .chat-chips {
+      display:flex; flex-wrap:wrap; gap:5px; padding:0 12px 10px;
+    }
+    .chip {
+      background:#f0f2f5; border:1px solid #ddd; border-radius:12px;
+      padding:4px 10px; font-size:11px; cursor:pointer; color:#444;
+    }
+    .chip:active { background:#e0e4e8; }
+  `;
+  document.head.appendChild(style);
+
+  // 注入 HTML
+  const fab = document.createElement('button');
+  fab.id = 'chat-fab';
+  fab.innerHTML = '<span style="font-size:18px">💬</span><span style="font-size:12px;font-weight:600;letter-spacing:0.5px">Trip</span>';
+  fab.title = '旅遊助理';
+
+  const panel = document.createElement('div');
+  panel.id = 'chat-panel';
+  panel.innerHTML = `
+    <div id="chat-header">
+      <span>🗾 福岡旅遊助理</span>
+      <button id="chat-close">✕</button>
+    </div>
+    <div id="chat-messages"></div>
+    <div style="padding:0 12px 6px;">
+      <select id="chat-date" style="width:100%;padding:6px 8px;border-radius:8px;border:1px solid #ddd;font-size:13px;color:#444;background:#f8f9fa;">
+        <option value="">📋 全部日期</option>
+        <option disabled>──────────</option>
+        <option value="6/16">📅 6/16 (二) 抵達福岡</option>
+        <option value="6/17">📅 6/17 (三) 福岡</option>
+        <option value="6/18">📅 6/18 (四) 糸島</option>
+        <option value="6/19">📅 6/19 (五) 別府 &amp; 由布院</option>
+        <option value="6/20">📅 6/20 (六) 福岡</option>
+        <option value="6/21">📅 6/21 (日) 返台</option>
+      </select>
+    </div>
+    <div class="chat-chips">
+      <span class="chip" data-q="行程">行程</span>
+      <span class="chip" data-q="住宿">住宿</span>
+      <span class="chip" data-q="餐廳">餐廳</span>
+      <span class="chip" data-q="天氣">天氣</span>
+      <span class="chip" data-q="班機">班機</span>
+      <span class="chip" data-q="參考清單">參考清單</span>
+    </div>
+    <div id="chat-input-row">
+      <input id="chat-input" placeholder="問我任何行程問題…" />
+      <button id="chat-send">➤</button>
+    </div>
+  `;
+  document.body.appendChild(fab);
+  document.body.appendChild(panel);
+
+  const msgs = panel.querySelector('#chat-messages');
+
+  function addMsg(text, type) {
+    const d = document.createElement('div');
+    d.className = 'msg msg-' + type;
+    // 支援 HTML 連結；純文字換行轉 <br>
+    const hasHtml = /<a /.test(text);
+    if (hasHtml) {
+      d.innerHTML = text.replace(/\n/g, '<br>');
+      d.querySelectorAll('.bot-spot-link').forEach(a => {
+        a.style.cssText = 'color:#1a73e8;text-decoration:underline;cursor:pointer;';
+        a.onclick = e => {
+          e.preventDefault();
+          const id = a.dataset.id;
+          if (a.dataset.type === 'main') flyTo(id);
+          else flyToRef(id);
+        };
+      });
+    } else {
+      d.textContent = text;
+    }
+    msgs.appendChild(d);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function ask(q) {
+    if (!q.trim()) return;
+    addMsg(q, 'user');
+    const reply = botReply(q);
+    setTimeout(() => {
+      addMsg(reply, 'bot');
+      const dm = q.match(/6\/(1[6-9]|2[01])/);
+      highlightDay(dm ? dm[0] : null);
+      // 查詢參考清單時，無論選哪天都顯示 refMarkers
+      if (/參考|推薦|牛腸|もつ|seafood|海鮮|拉麵|ramen|麵包|bread|購物|shop|酒吧|bar|屋台|yatai/.test(q)) {
+        Object.values(refMarkers).forEach(m => {
+          const el = m.getElement();
+          if (el) el.style.display = '';
+        });
+      }
+    }, 300);
+    panel.querySelector('#chat-input').value = '';
+  }
+
+  // 開場白
+  addMsg('你好！我是福岡旅遊助理 🗾\n問我行程、天氣、住宿、餐廳、景點等問題，或點下方快捷按鈕！', 'bot');
+
+  // 事件
+  fab.onclick = () => { panel.classList.toggle('open'); };
+  panel.querySelector('#chat-close').onclick = () => { panel.classList.remove('open'); highlightDay(null); };
+  panel.querySelector('#chat-date').onchange = e => { highlightDay(e.target.value || null); };
+  panel.querySelector('#chat-send').onclick = () => ask(panel.querySelector('#chat-input').value);
+  panel.querySelector('#chat-input').onkeydown = e => { if (e.key==='Enter') ask(e.target.value); };
+  panel.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    const date = panel.querySelector('#chat-date').value;
+    ask(date ? `${date} ${c.dataset.q}` : c.dataset.q);
   });
 })();
 </script>
