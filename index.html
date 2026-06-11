@@ -1176,6 +1176,7 @@ function botReply(q) {
       panel.classList.add('open');
       panel.getBoundingClientRect();
       panel.style.transition = '';
+      fab.style.display = 'none';
     } else {
       panel.classList.add('open');
     }
@@ -1187,6 +1188,7 @@ function botReply(q) {
       panel.classList.remove('open');
       panel.getBoundingClientRect();
       panel.style.transition = '';
+      fab.style.display = '';
     } else {
       panel.classList.remove('open');
     }
